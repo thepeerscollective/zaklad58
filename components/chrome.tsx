@@ -21,7 +21,7 @@ export function Header() {
   return (
     <header className={`nav${open ? ' open' : ''}`}>
       <div className="wrap">
-        <a className="logo" href={href('/')} aria-label="Zakład 58, strona główna"><Sun color="var(--orange)" rays={16} /><span><b>ZAKŁAD 58</b><span>lofty w dawnej fabryce radia · Kraków</span></span></a>
+        <a className="logo" href={href('/')} aria-label="Zakład 58, strona główna"><Sun color="var(--orange)" rays={16} /><b>ZAKŁAD 58</b></a>
         <nav aria-label="Główna"><ul>{NAV.map(([l, h]) => <li key={h}><a href={href(h)} aria-current={h !== '/#bar' && path.startsWith(h) ? 'page' : undefined}>{l}</a></li>)}</ul></nav>
         <Lang />
         <a className="btn b-or" href={href('/rezerwacja/')}>Zarezerwuj</a>
