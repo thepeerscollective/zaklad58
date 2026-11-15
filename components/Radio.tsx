@@ -9,7 +9,7 @@ const CHORDS = [[196, 247, 294], [220, 277, 330], [175, 220, 262], [247, 311, 37
 
 /** Radio Taraban 58: tune the dial, catch a loft. Static between stations, music on them. Sound only after you switch it on. */
 export default function Radio() {
-  const [f, setF] = useState(95.0);
+  const [f, setF] = useState(93.3);
   const [vol, setVol] = useState(0.6);
   const [on, setOn] = useState(false);
   const dial = useRef<HTMLDivElement>(null);

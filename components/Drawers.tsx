@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 /** Six drawers of a loft. Pull one to see what is inside. */
 export default function Drawers({ items, hex, ink }: { items: [string, string][]; hex: string; ink: string }) {
-  const [o, setO] = useState<number | null>(0);
+  const [o, setO] = useState<number | null>(null);
   const shades = [hex, `color-mix(in srgb, ${hex} 82%, #fff)`, `color-mix(in srgb, ${hex} 70%, #000)`];
   return (
     <div className="drawers">{items.map(([t, d], i) => (

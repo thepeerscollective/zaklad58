@@ -17,12 +17,12 @@ export default function Booking() {
   const [today, setToday] = useState<number | null>(null);
   const [a, setA] = useState<number | null>(null);
   const [b, setB] = useState<number | null>(null);
-  const [li, setLi] = useState(2);
+  const [li, setLi] = useState<number | null>(null);
   const [ad, setAd] = useState(2);
   const [ki, setKi] = useState(0);
   const [dog, setDog] = useState(0);
-  const [br, setBr] = useState(true);
-  const [bar, setBar] = useState(true);
+  const [br, setBr] = useState(false);
+  const [bar, setBar] = useState(false);
   const [late, setLate] = useState(false);
   const [step, setStep] = useState<'pick' | 'form' | 'done'>('pick');
   useEffect(() => {
@@ -32,22 +32,22 @@ export default function Booking() {
     const os = Number(p.get('os')); if (os) setAd(Math.min(6, os));
     const od = fromIso(p.get('od')), dd = fromIso(p.get('do'));
     if (od && dd && dd > od) { setA(od); setB(dd); }
-    else { const f = new Date(t); f.setDate(t.getDate() + ((5 - t.getDay() + 7) % 7 || 7)); const s = new Date(f); s.setDate(f.getDate() + 2); setA(key(f)); setB(key(s)); }
   }, []);
   const nightsList = useMemo(() => { const out: number[] = []; if (!a || !b) return out; const d = day(a); while (key(d) < b) { out.push(key(d)); d.setDate(d.getDate() + 1); } return out; }, [a, b]);
   const n = nightsList.length;
   const free = (i: number) => nightsList.every(k => !booked(i, k));
-  const L = LOFTS[li];
+  const L = li === null ? null : LOFTS[li];
+  const busy = (k: number) => li === null ? LOFTS.every((_, i) => booked(i, k)) : booked(li, k);
   const fits = (i: number) => ad + ki <= LOFTS[i].guests;
-  useEffect(() => { if (today && (!free(li) || !fits(li))) { const alt = LOFTS.findIndex((_, i) => free(i) && fits(i)); if (alt >= 0) setLi(alt); } }, [a, b, ad, ki, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (today && li !== null && (!free(li) || !fits(li))) { const alt = LOFTS.findIndex((_, i) => free(i) && fits(i)); setLi(alt >= 0 ? alt : null); } }, [a, b, ad, ki, today]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pickDay = (k: number) => {
     if (!a || (a && b) || k <= a) { setA(k); setB(null); return; }
-    let ok = true; const d = day(a); while (key(d) < k) { if (booked(li, key(d))) ok = false; d.setDate(d.getDate() + 1); }
+    let ok = true; const d = day(a); while (key(d) < k) { if (busy(key(d))) ok = false; d.setDate(d.getDate() + 1); }
     if (ok) setB(k); else { setA(k); setB(null); }
   };
   const months = useMemo(() => { if (!today) return []; const t = day(today); return [0, 1].map(o => new Date(t.getFullYear(), t.getMonth() + o, 1)); }, [today]);
-  const nightsCost = n * L.price;
+  const nightsCost = L ? n * L.price : 0;
   const brk = br ? (ad + ki) * n * 45 : 0;
   const disc = Math.round(nightsCost * .12);
   const total = nightsCost + brk + (late ? 80 : 0) - disc;
@@ -56,7 +56,7 @@ export default function Booking() {
     <div><span style={{ minWidth: 60 }}>{label}</span><button onClick={() => set(Math.max(min, v - 1))} aria-label={`${label}: mniej`}>−</button><output aria-live="polite">{v}</output><button onClick={() => set(Math.min(max, v + 1))} aria-label={`${label}: więcej`}>+</button></div>
   );
 
-  if (step === 'done') return (
+  if (step === 'done' && L) return (
     <div className="step" style={{ textAlign: 'center', padding: 'clamp(24px,6vh,64px)' }}>
       <div style={{ transform: 'scale(1.8)', display: 'inline-block', margin: '20px 0 28px' }}><Tag n={L.id} c={L.hex} dark={L.ink === '#151311'} /></div>
       <h2>Szuflada {L.id} jest Twoja.</h2>
@@ -78,26 +78,26 @@ export default function Booking() {
                   <div className="cal" key={m.getMonth()}>
                     <h4>{MON[m.getMonth()]} {m.getFullYear()}</h4>
                     <div className="g">{DOW.map(d => <span key={d}>{d}</span>)}{Array.from({ length: first }, (_, i) => <i key={'e' + i} />)}
-                      {Array.from({ length: dim }, (_, i) => { const k = key(new Date(m.getFullYear(), m.getMonth(), i + 1)); const past = today !== null && k < today; const bk = booked(li, k);
+                      {Array.from({ length: dim }, (_, i) => { const k = key(new Date(m.getFullYear(), m.getMonth(), i + 1)); const past = today !== null && k < today; const bk = busy(k);
                         const edge = k === a || k === b; const inr = a && b && k > a && k < b;
                         return <button key={k} disabled={past || (bk && !edge)} className={edge ? 'edge' : inr ? 'in' : ''} onClick={() => pickDay(k)} aria-label={`${i + 1} ${MON[m.getMonth()]}${bk ? ', zajęte' : ''}`} aria-pressed={edge}>{i + 1}</button>; })}
                     </div>
                   </div>
                 );
               })}</div>
-              <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>Przekreślone noce są zajęte w lofcie {L.id}. Kliknij przyjazd, potem wyjazd.</p>
+              <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>{L ? `Przekreślone noce są zajęte w lofcie ${L.id}.` : 'Przekreślone noce są zajęte we wszystkich loftach.'} Kliknij przyjazd, potem wyjazd.</p>
             </div>
             <div className="step">
               <span className="lb o">2 · Szuflada</span>
               <div className="pick">{LOFTS.map((l, i) => { const ok = free(i) && fits(i); return (
-                <button key={l.id} aria-pressed={li === i} disabled={!ok} onClick={() => setLi(i)} style={{ ['--c' as string]: l.hex, ['--ink2' as string]: l.ink } as React.CSSProperties}>
+                <button key={l.id} aria-pressed={li === i} disabled={!ok} onClick={() => setLi(li === i ? null : i)} style={{ ['--c' as string]: l.hex, ['--ink2' as string]: l.ink } as React.CSSProperties}>
                   <b>{l.id}</b><small>{l.price} zł</small><small className="lb" style={{ fontSize: 9 }}>{!fits(i) ? `max ${l.guests} os.` : free(i) ? 'wolne' : 'zajęte'}</small>
                 </button>); })}</div>
             </div>
             <div className="step">
               <span className="lb o">3 · Goście i dodatki</span>
               <div className="cnt"><Cnt label="Dorośli" v={ad} set={setAd} min={1} /><Cnt label="Dzieci" v={ki} set={setKi} /><Cnt label="Pies" v={dog} set={setDog} max={2} /></div>
-              {dog > 0 && !L.dog && <p style={{ color: 'var(--brick)', fontSize: 14, marginTop: 8 }}>Loft {L.id} jest bez psa. Psy mile widziane w 01, 03, 04 i 06.</p>}
+              {dog > 0 && L && !L.dog && <p style={{ color: 'var(--brick)', fontSize: 14, marginTop: 8 }}>Loft {L.id} jest bez psa. Psy mile widziane w 01, 03, 04 i 06.</p>}
               <div className="ext">
                 <label><span><input type="checkbox" checked={br} onChange={e => setBr(e.target.checked)} /> Śniadanie z Palarni Fabrycznej</span><span className="muted">+ 45 zł / os. / dzień</span></label>
                 <label><span><input type="checkbox" checked={bar} onChange={e => setBar(e.target.checked)} /> Stolik w barze Radiowa 58 w sobotę 21:00</span><span className="muted">gratis dla gości</span></label>
@@ -120,9 +120,9 @@ export default function Booking() {
       </div>
       <aside className="sum" aria-live="polite">
         <span className="lb" style={{ color: 'var(--mustard)' }}>Twój brelok</span>
-        <div className="keyrow"><Tag n={L.id} c={L.hex} dark={L.ink === '#151311'} /><span style={{ fontFamily: 'var(--serif)', fontSize: 22, lineHeight: 1.1 }}>{L.title}</span></div>
+        <div className="keyrow">{L ? <><Tag n={L.id} c={L.hex} dark={L.ink === '#151311'} /><span style={{ fontFamily: 'var(--serif)', fontSize: 22, lineHeight: 1.1 }}>{L.title}</span></> : <span style={{ fontFamily: 'var(--serif)', fontSize: 20, lineHeight: 1.1, opacity: .5, fontStyle: 'italic' }}>wybierz szufladę</span>}</div>
         <dl>
-          <dt>Daty</dt><dd>{fmt(a)}–{fmt(b)} · {n} {n === 1 ? 'noc' : 'noce'}</dd>
+          <dt>Daty</dt><dd>{a ? `${fmt(a)}–${fmt(b)}${n ? ` · ${n} ${n === 1 ? 'noc' : 'noce'}` : ''}` : '—'}</dd>
           <dt>Goście</dt><dd>{ad} dor.{ki ? ` + ${ki} dz.` : ''}{dog ? ` + ${dog === 1 ? 'pies' : '2 psy'}` : ''}</dd>
           <dt>Noclegi</dt><dd>{zl(nightsCost)}</dd>
           {br && <><dt>Śniadania</dt><dd>{zl(brk)}</dd></>}
@@ -131,7 +131,7 @@ export default function Booking() {
           <dt>Rabat za rezerwację tutaj</dt><dd style={{ color: 'var(--mustard)' }}>− {zl(disc)}</dd>
         </dl>
         <p className="tot">{zl(total)}</p>
-        {step === 'pick' && <button className="btn b-or" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }} disabled={!n || (dog > 0 && !L.dog)} onClick={() => setStep('form')}>Dalej: dane gościa</button>}
+        {step === 'pick' && <button className="btn b-or" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }} disabled={!n || !L || (dog > 0 && !L.dog)} onClick={() => setStep('form')}>Dalej: dane gościa</button>}
       </aside>
     </div>
   );

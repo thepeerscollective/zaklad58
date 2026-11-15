@@ -1,8 +1,7 @@
 import { href } from '@/lib/base';
 import { LOFTS } from '@/lib/data';
-import { Img, Sun, Tag, XBrace } from '@/components/ui';
+import { Img, Sun } from '@/components/ui';
 import HeroBook from '@/components/HeroBook';
-import Corridor from '@/components/Corridor';
 import Radio from '@/components/Radio';
 
 const MARQ = ['Self check-in z brelokiem', 'Meble z lat 50. i 60.', 'Gramofon w każdym lofcie', 'Bar Radiowa 58 na parterze', '10 min od Rynku', 'Psy mile widziane'];
@@ -12,45 +11,30 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="wrap">
-          <div className="esu">
+          <div className="esu cab">
             <div className="panel p-cream h-main">
               <span className="lb o">Zakład 58 · lofty w dawnej fabryce radia</span>
               <h1>Sześć loftów,<br />każdy z innej<br /><em>szuflady.</em></h1>
-              <p className="lead">Fabryka radioodbiorników z 1958, urządzona jak regał Eamesa. Każdy loft ma swój kolor, swój mebel z epoki i swój brelok do klucza.</p>
+              <p className="lead">Regał to budynek, szuflada to mieszkanie. Każda ma swój kolor i mebel z epoki. Otwórz którąś.</p>
             </div>
-            <div className="panel p-or h-no"><div className="no"><em>No</em><b>6</b></div><span className="lb" style={{ alignSelf: 'end' }}>loftów</span></div>
-            <Img n="z01" alt="Loft 03: regał w stylu Eamesa, gramofon i płyty" front="var(--teal)" className="h-photo" eager />
-            <div className="p-mu h-sun"><Sun /></div>
+            {LOFTS.map(l => (
+              <a key={l.id} className="hdr" href={href(`/lofty/${l.id}/`)} style={{ ['--c' as string]: l.hex, ['--k' as string]: l.ink } as React.CSSProperties} aria-label={`Loft ${l.id}, ${l.title}, od ${l.price} zł za noc`}>
+                <Img n={l.img} alt="" eager />
+                <span className="front">
+                  <span className="dn">{l.id}</span>
+                  <span className="handle" aria-hidden />
+                  <span className="dm"><b>{l.name}</b><small>{l.m2} m² · {l.guests} os. · od {l.price} zł</small></span>
+                </span>
+                <span className="peek" aria-hidden>{l.title} →</span>
+              </a>
+            ))}
             <HeroBook />
-            <div className="h-price"><div className="teal"><XBrace /><p>od 380 zł<br /><span style={{ fontFamily: 'var(--sans)', fontSize: 14 }}>za noc, dwie osoby</span></p></div><Img n="z02" alt="Wanna na lwich łapach w lofcie 02" front="var(--mustard)" eager /></div>
           </div>
           <div className="legs" aria-hidden><i /><i /></div>
         </div>
       </section>
 
       <div className="marq" aria-hidden><div>{[...MARQ, ...MARQ].map((m, i) => <span key={i}>{m}  ✺</span>)}</div></div>
-
-      <section className="sec dark" id="drzwi">
-        <div className="wrap">
-          <Corridor><div><span className="lb o">Korytarz, piętro 2</span><h2>Wybierz drzwi.</h2><p className="muted" style={{ marginTop: 8 }}>Najedź na drzwi, żeby zajrzeć do środka.</p></div></Corridor>
-        </div>
-      </section>
-
-      <section className="sec">
-        <div className="wrap">
-          <div className="head"><div><span className="lb o">Klucze</span><h2>Każdy loft ma swój brelok.</h2></div><p className="muted" style={{ maxWidth: 440 }}>Zamiast pokoju „standard” i „deluxe” masz sześć mieszkań, każde z innym charakterem i innym meblem z epoki.</p></div>
-          <div className="keys">{LOFTS.map(l => (
-            <a className="key" key={l.id} href={href(`/lofty/${l.id}/`)}>
-              <div className="tx">
-                <div className="top"><Tag n={l.id} c={l.hex} dark={l.ink === '#151311'} /><div><span className="lb" style={{ fontSize: 10, color: 'var(--grey)' }}>{l.color}</span><h3>{l.title}</h3></div></div>
-                <p className="muted" style={{ fontSize: 14 }}>{l.m2} m² · {l.guests} os.</p>
-                <div className="kfoot"><b>od {l.price} zł / noc</b><span className="lb" style={{ fontSize: 10 }}>Zobacz →</span></div>
-              </div>
-              <Img n={l.img} alt={l.title} front={l.hex} />
-            </a>
-          ))}</div>
-        </div>
-      </section>
 
       <section className="sec fact">
         <div className="wrap grid">
@@ -90,10 +74,14 @@ export default function Home() {
       </section>
 
       <section className="sec">
-        <div className="wrap">
-          <div className="head"><div><span className="lb o">Goście</span><h2>Kto spał w której szufladzie.</h2></div></div>
-          <div className="revs">{LOFTS.filter(l => l.review).map(l => (
-            <figure className="rev" key={l.id}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Tag n={l.id} c={l.hex} /><span className="stars">★★★★★</span></div><q>{l.review![0]}</q><figcaption style={{ fontWeight: 500, fontSize: 14, marginTop: 'auto' }}>{l.review![1]}</figcaption></figure>
+        <div className="wrap gbook-wrap">
+          <div><span className="lb o">Księga gości</span><h2>Kto spał w której <em>szufladzie.</em></h2><p className="muted" style={{ marginTop: 12, maxWidth: 360 }}>W każdym lofcie leży zeszyt. Przepisujemy z niego po jednym wpisie, z pisownią gości.</p></div>
+          <div className="gbook">{LOFTS.filter(l => l.review).map((l, i) => (
+            <figure key={l.id} className="gpage" style={{ ['--c' as string]: l.hex } as React.CSSProperties}>
+              <span className="gtab">loft {l.id} · {l.name.toLowerCase()}</span>
+              <blockquote>{l.review![0]}</blockquote>
+              <figcaption>{l.review![1]}<span>{['marzec', 'wrzesień', 'październik'][i % 3]} 2026</span></figcaption>
+            </figure>
           ))}</div>
         </div>
       </section>
