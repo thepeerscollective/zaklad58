@@ -1,0 +1,80 @@
+import type { Metadata } from 'next';
+import { href } from '@/lib/base';
+import { LOFTS, loft } from '@/lib/data';
+import { Img, Tag } from '@/components/ui';
+import Drawers from '@/components/Drawers';
+
+export function generateStaticParams() { return LOFTS.map(l => ({ id: l.id })); }
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params; const l = loft(id); return { title: `Loft ${l.id} · ${l.title}`, description: l.desc };
+}
+
+function Plan({ l }: { l: (typeof LOFTS)[number] }) {
+  const W = 600, H = 340;
+  const rooms: [number, number, number, number, string][] = l.bedrooms === 1
+    ? [[0, 0, 360, 340, `salon · ${Math.round(l.m2 * .55)} m²`], [360, 0, 240, 200, `sypialnia · ${Math.round(l.m2 * .25)} m²`], [360, 200, 240, 140, `łazienka · ${Math.round(l.m2 * .12)} m²`]]
+    : [[0, 0, 330, 340, `salon · ${Math.round(l.m2 * .45)} m²`], [330, 0, 270, 120, 'sypialnia 1'], [330, 120, 270, 110, l.bedrooms > 2 ? 'sypialnia 2 · 3' : 'sypialnia 2'], [330, 230, 270, 110, 'łazienka']];
+  return (
+    <svg viewBox={`-10 -10 ${W + 20} ${H + 20}`} role="img" aria-label={`Plan loftu ${l.id}`}>
+      <rect x="0" y="0" width={W} height={H} fill="var(--paper)" stroke="var(--black)" strokeWidth="8" />
+      {rooms.map(([x, y, w, h, t], i) => <g key={i}><rect x={x} y={y} width={w} height={h} fill={i === 0 ? l.hex : 'none'} fillOpacity={i === 0 ? .14 : 0} stroke="var(--black)" strokeWidth="4" /><text x={x + 16} y={y + 30} fontFamily="League Spartan Variable, sans-serif" fontWeight="700" fontSize="14" letterSpacing="1.5">{t.toUpperCase()}</text></g>)}
+      <rect x="40" y="250" width="150" height="56" rx="6" fill={l.hex} /><text x="115" y="284" textAnchor="middle" fontFamily="League Spartan Variable, sans-serif" fontWeight="700" fontSize="12" fill={l.ink}>{l.piece.toUpperCase()}</text>
+      <rect x="230" y="70" width="80" height="140" rx="4" fill="none" stroke="var(--black)" strokeWidth="3" strokeDasharray="6 5" /><text x="270" y="146" textAnchor="middle" fontFamily="League Spartan Variable, sans-serif" fontWeight="700" fontSize="11">KANAPA</text>
+      {[60, 180, 300].map(x => <rect key={x} x={x} y="-6" width="70" height="12" fill="var(--teal)" />)}
+    </svg>
+  );
+}
+
+export default async function Loft({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params; const l = loft(id);
+  const others = LOFTS.filter(o => o.id !== l.id);
+  const g = [...l.gallery, ...others.map(o => o.img)].slice(0, 5);
+  return (
+    <>
+      <section className="lhero">
+        <div className="wrap">
+          <div className="esu">
+            <div className="panel info" style={{ background: l.hex, color: l.ink }}>
+              <p className="lb" style={{ opacity: .85 }}><a href={href('/lofty/')}>Lofty</a>  /  No {l.id} · {l.color}</p>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}><span style={{ fontFamily: 'var(--label)', fontWeight: 800, fontSize: 'clamp(30px,6vh,52px)', lineHeight: 1 }}>{l.id}</span><h1>{l.title.split(' i ')[0]}{l.title.includes(' i ') ? <><br /><em style={{ color: 'inherit' }}>i {l.title.split(' i ').slice(1).join(' i ')}.</em></> : '.'}</h1></div>
+              <p className="lead" style={{ opacity: .92 }}>{l.desc}</p>
+              <div className="fx"><span><b>{l.m2} m²</b><small>metraż</small></span><span><b>{l.guests} os.</b><small>gości</small></span><span><b>{l.bedrooms}</b><small>{l.bedrooms === 1 ? 'sypialnia' : 'sypialnie'}</small></span><span><b>{l.dog ? 'tak' : 'nie'}</b><small>pies</small></span></div>
+              <div className="mini"><span><span className="lb" style={{ fontSize: 10, display: 'block', opacity: .8 }}>Od</span><b>{l.price} zł / noc</b></span><a className="btn b-mu" href={href(`/rezerwacja/?loft=${l.id}`)} style={{ marginLeft: 'auto' }}>Rezerwuj</a></div>
+            </div>
+            <Img n={l.img} alt={l.title} front={l.hex} eager />
+          </div>
+        </div>
+      </section>
+
+      <section className="sec" style={{ paddingBottom: 'clamp(20px,4vh,48px)' }}>
+        <div className="wrap">
+          <div className="head"><div><span className="lb o">Zdjęcia</span><h2>Zajrzyj do środka.</h2></div><p className="muted">Piętro {l.floor} · okna: {l.windows}</p></div>
+          <div className="gal">{g.map((n, i) => <Img key={n + i} n={n} alt={i < l.gallery.length ? `${l.title}, zdjęcie ${i + 1}` : 'Inny loft w Zakładzie 58'} front={i % 2 ? 'var(--mustard)' : l.hex} />)}</div>
+        </div>
+      </section>
+
+      <section className="sec">
+        <div className="wrap">
+          <div className="head"><div><span className="lb o">Co jest w szufladach</span><h2>Otwórz każdą.</h2></div><p className="muted" style={{ maxWidth: 380 }}>Najedź albo kliknij, żeby wysunąć szufladę.</p></div>
+          <Drawers items={l.drawers} hex={l.hex} ink={l.ink} />
+        </div>
+      </section>
+
+      <section className="sec" style={{ background: 'var(--paper)' }}>
+        <div className="wrap plan">
+          <div><span className="lb o">Plan</span><h2 style={{ margin: '8px 0 18px' }}>Jak to jest ułożone.</h2><Plan l={l} /></div>
+          <dl><dt>Piętro</dt><dd>{l.floor}</dd><dt>Okna</dt><dd>{l.windows}</dd><dt>Check-in</dt><dd>15:00, kod z breloka</dd><dt>Check-out</dt><dd>11:00</dd><dt>Parking</dt><dd>w podwórzu, 40 zł / doba</dd><dt>Płyta</dt><dd>{l.artist} · {l.album}</dd></dl>
+        </div>
+      </section>
+
+      <section className="sec">
+        <div className="wrap">
+          <div className="head"><div><span className="lb o">Inne szuflady</span><h2>Może ta?</h2></div></div>
+          <div className="others">{others.map(o => (
+            <a key={o.id} href={href(`/lofty/${o.id}/`)}><Img n={o.img} alt={o.title} front={o.hex} /><div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Tag n={o.id} c={o.hex} dark={o.ink === '#151311'} /><span><b style={{ fontFamily: 'var(--serif)', fontWeight: 400, fontSize: 18, display: 'block', lineHeight: 1.15 }}>{o.title}</b><span className="muted" style={{ fontSize: 13 }}>od {o.price} zł</span></span></div></a>
+          ))}</div>
+        </div>
+      </section>
+    </>
+  );
+}
