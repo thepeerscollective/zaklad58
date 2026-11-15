@@ -3,26 +3,11 @@ import { href } from '@/lib/base';
 import { LOFTS, loft } from '@/lib/data';
 import { Img, Tag } from '@/components/ui';
 import Drawers from '@/components/Drawers';
+import FloorPlan from '@/components/FloorPlan';
 
 export function generateStaticParams() { return LOFTS.map(l => ({ id: l.id })); }
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params; const l = loft(id); return { title: `Loft ${l.id} · ${l.title}`, description: l.desc };
-}
-
-function Plan({ l }: { l: (typeof LOFTS)[number] }) {
-  const W = 600, H = 340;
-  const rooms: [number, number, number, number, string][] = l.bedrooms === 1
-    ? [[0, 0, 360, 340, `salon · ${Math.round(l.m2 * .55)} m²`], [360, 0, 240, 200, `sypialnia · ${Math.round(l.m2 * .25)} m²`], [360, 200, 240, 140, `łazienka · ${Math.round(l.m2 * .12)} m²`]]
-    : [[0, 0, 330, 340, `salon · ${Math.round(l.m2 * .45)} m²`], [330, 0, 270, 120, 'sypialnia 1'], [330, 120, 270, 110, l.bedrooms > 2 ? 'sypialnia 2 · 3' : 'sypialnia 2'], [330, 230, 270, 110, 'łazienka']];
-  return (
-    <svg viewBox={`-10 -10 ${W + 20} ${H + 20}`} role="img" aria-label={`Plan loftu ${l.id}`}>
-      <rect x="0" y="0" width={W} height={H} fill="var(--paper)" stroke="var(--black)" strokeWidth="8" />
-      {rooms.map(([x, y, w, h, t], i) => <g key={i}><rect x={x} y={y} width={w} height={h} fill={i === 0 ? l.hex : 'none'} fillOpacity={i === 0 ? .14 : 0} stroke="var(--black)" strokeWidth="4" /><text x={x + 16} y={y + 30} fontFamily="League Spartan Variable, sans-serif" fontWeight="700" fontSize="14" letterSpacing="1.5">{t.toUpperCase()}</text></g>)}
-      <rect x="40" y="250" width="150" height="56" rx="6" fill={l.hex} /><text x="115" y="284" textAnchor="middle" fontFamily="League Spartan Variable, sans-serif" fontWeight="700" fontSize="12" fill={l.ink}>{l.piece.toUpperCase()}</text>
-      <rect x="230" y="70" width="80" height="140" rx="4" fill="none" stroke="var(--black)" strokeWidth="3" strokeDasharray="6 5" /><text x="270" y="146" textAnchor="middle" fontFamily="League Spartan Variable, sans-serif" fontWeight="700" fontSize="11">KANAPA</text>
-      {[60, 180, 300].map(x => <rect key={x} x={x} y="-6" width="70" height="12" fill="var(--teal)" />)}
-    </svg>
-  );
 }
 
 export default async function Loft({ params }: { params: Promise<{ id: string }> }) {
@@ -62,7 +47,7 @@ export default async function Loft({ params }: { params: Promise<{ id: string }>
 
       <section className="sec" style={{ background: 'var(--paper)' }}>
         <div className="wrap plan">
-          <div><span className="lb o">Plan</span><h2 style={{ margin: '8px 0 18px' }}>Jak to jest ułożone.</h2><Plan l={l} /></div>
+          <div><span className="lb o">Plan</span><h2 style={{ margin: '8px 0 14px' }}>Jak to jest ułożone.</h2><FloorPlan id={l.id} hex={l.hex} ink={l.ink} /></div>
           <dl><dt>Piętro</dt><dd>{l.floor}</dd><dt>Okna</dt><dd>{l.windows}</dd><dt>Check-in</dt><dd>15:00, kod z breloka</dd><dt>Check-out</dt><dd>11:00</dd><dt>Parking</dt><dd>w podwórzu, 40 zł / doba</dd><dt>Płyta</dt><dd>{l.artist} · {l.album}</dd></dl>
         </div>
       </section>
